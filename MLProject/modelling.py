@@ -64,17 +64,20 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         print(f"Logged artifact {plot_path} to MLflow")  # Debug
         plt.close()
         
-        # Debug: cek artifact root
+        # Debug: cek artifact root dan path
         artifact_root = os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns')
         print(f"MLflow artifact root: {artifact_root}")
+        print(f"Current working directory: {os.getcwd()}")
+        print(f"Artifact path exists: {os.path.exists(plot_path)}")
         
         print(f"{model_name} - R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}, MAPE: {mape:.4f}, Explained Variance: {explained_var:.4f}")
 
 def main():
-    # Rely on environment variables for tracking URI
+    # Set environment variables
     os.environ['MLFLOW_TRACKING_URI'] = 'https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow'
     os.environ['MLFLOW_TRACKING_USERNAME'] = 'covryzne'
     os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN')
+    os.environ['MLFLOW_ARTIFACT_ROOT'] = 'mlruns'  # Set lokal artifact root
     
     mlflow.set_experiment("Student_Performance_Prediction")
     

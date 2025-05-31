@@ -49,7 +49,8 @@ jobs:
         run: |
           cd MLProject
           mlflow run . --env-manager=local -P data_path=student_habits_preprocessing.csv
-          ls -la mlruns/ || echo "mlruns directory not found after MLflow run"  # Debug
+          ls -la mlruns/ || echo "mlruns directory not found in MLProject after MLflow run"
+          ls -la Membangun_model/ || echo "Membangun_model directory not found"  # Debug plots
 
       # Get latest MLflow run_id
       - name: Get latest MLflow run_id
