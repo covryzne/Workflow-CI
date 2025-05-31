@@ -62,24 +62,24 @@ jobs:
           export MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow
           export MLFLOW_TRACKING_USERNAME=covryzne
           export MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
-          mkdir -p mlruns/0
+          mkdir -p ../mlruns/0  # Buat mlruns di root
           for run_id in ${{ env.run_ids }}; do
             echo "Downloading artifacts for run_id: $run_id"
-            mlflow artifacts download --run-id $run_id --dst-path mlruns/0/$run_id/artifacts
-            ls -la mlruns/0/$run_id/artifacts || echo "No artifacts downloaded for run_id: $run_id"
+            mlflow artifacts download --run-id $run_id --dst-path ../mlruns/0/$run_id/artifacts
+            ls -la ../mlruns/0/$run_id/artifacts || echo "No artifacts downloaded for run_id: $run_id"
           done
-          ls -la mlruns/ || echo "mlruns directory structure after download"
+          ls -la ../mlruns/ || echo "mlruns directory structure after download"
 
       - name: Upload artifacts to GitHub LFS
         run: |
           git lfs install
-          git lfs track "MLProject/mlruns/**/*"
-          ls -la MLProject/  # Debug: cek isi folder MLProject
-          if [ -d "MLProject/mlruns" ]; then
-            ls -la MLProject/mlruns/  # Debug: cek isi mlruns
-            git config user.name "ShendiTeukuMaulanaEfendi"
-            git config user.email "your_email@example.com"  # Ganti dengan email lu
-            git add MLProject/mlruns/
+          git lfs track "mlruns/**/*"  # Track mlruns di root
+          ls -la .  # Debug: cek isi root
+          if [ -d "mlruns" ]; then
+            ls -la mlruns/  # Debug: cek isi mlruns
+            git config user.name "covryzne"
+            git config user.email "shendyteuku2@gmail.com"  # Ganti dengan email lu
+            git add mlruns/
             git add .gitattributes
             git commit -m "Add MLflow artifacts to LFS" || echo "No changes to commit"
             git push origin main
