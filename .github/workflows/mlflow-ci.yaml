@@ -61,7 +61,9 @@ jobs:
         run: |
           git lfs install
           git lfs track "MLProject/mlruns/**/*"
+          ls -la MLProject/  # Debug: cek isi folder MLProject
           if [ -d "MLProject/mlruns" ]; then
+            ls -la MLProject/mlruns/  # Debug: cek isi mlruns
             git add MLProject/mlruns/
             git add .gitattributes
             git commit -m "Add MLflow artifacts to LFS" || echo "No changes to commit"
@@ -69,6 +71,7 @@ jobs:
           else
             echo "No mlruns directory found, skipping LFS upload"
             exit 1
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
