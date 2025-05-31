@@ -13,52 +13,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Set up job
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Python 3.12.7
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
           python-version: "3.12.7"
 
-      # Check environment
       - name: Check Env
         run: |
           python --version
           pip --version
 
-      # Install dependencies
       - name: Install dependencies
         run: |
           pip install mlflow==2.17.0 scikit-learn==1.5.2 pandas==2.2.3 numpy==2.1.2 xgboost==2.1.1 matplotlib==3.9.2 seaborn==0.13.2 python-dotenv==1.0.1
 
-      # Set MLflow Tracking URI and credentials
       - name: Set MLflow Tracking URI
         run: |
           echo "MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow" >> $GITHUB_ENV
           echo "MLFLOW_TRACKING_USERNAME=covryzne" >> $GITHUB_ENV
           echo "MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}" >> $GITHUB_ENV
-          echo "MLFLOW_ARTIFACT_ROOT=MLProject/mlruns" >> $GITHUB_ENV
 
-      # Run MLflow project
       - name: Run MLflow project
-        env:
-          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           cd MLProject
           mlflow run . --env-manager=local -P data_path=student_habits_preprocessing.csv
           ls -la mlruns/ || echo "mlruns directory not found in MLProject after MLflow run"
-          ls -la Membangun_model/ || echo "Membangun_model directory not found"  # Debug plots
+          ls -la Membangun_model/ || echo "Membangun_model directory not found"
 
-      # Get latest MLflow run_id
       - name: Get latest MLflow run_id
         run: |
           run_id=$(mlflow runs list --experiment-id 0 | head -n 1 | awk '{print $2}')
           echo "run_id=$run_id" >> $GITHUB_ENV
 
-      # Upload artifacts to GitHub LFS
       - name: Upload artifacts to GitHub LFS
         run: |
           git lfs install
@@ -77,29 +66,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build Docker image
       - name: Build Docker image
         run: |
           docker build -t workflow-ci:latest MLProject/
 
-      # Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Tag Docker image
       - name: Tag Docker image
         run: |
           docker tag workflow-ci:latest ${{ secrets.DOCKERHUB_USERNAME }}/workflow-ci:latest
 
-      # Push Docker image
       - name: Push Docker image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/workflow-ci:latest
 
-      # Post steps (cleanup)
       - name: Post Log in to Docker Hub
         if: always()
         run: |
@@ -115,7 +99,6 @@ jobs:
         run: |
           echo "Checkout completed"
 
-      # Complete job
       - name: Complete job
         if: always()
         run: |

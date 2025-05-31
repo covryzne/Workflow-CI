@@ -59,25 +59,25 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         plt.ylabel('Predicted')
         plt.title(f'Predicted vs Actual ({model_name})')
         plt.savefig(plot_path)
-        print(f"Saved plot to {plot_path}")  # Debug
-        mlflow.log_artifact(plot_path)
-        print(f"Logged artifact {plot_path} to MLflow")  # Debug
+        print(f"Saved plot to {plot_path}")
+        mlflow.log_artifact(plot_path, artifact_path="plots")  # Lokal
+        mlflow.log_artifact(plot_path, artifact_path="plots", tracking_uri="https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow")  # DagsHub
+        print(f"Logged artifact {plot_path} to MLflow")
         plt.close()
         
-        # Debug: cek artifact root dan path
-        artifact_root = os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns')
-        print(f"MLflow artifact root: {artifact_root}")
+        print(f"MLflow artifact root: {os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns')}")
         print(f"Current working directory: {os.getcwd()}")
         print(f"Artifact path exists: {os.path.exists(plot_path)}")
         
         print(f"{model_name} - R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}, MAPE: {mape:.4f}, Explained Variance: {explained_var:.4f}")
 
 def main():
-    # Set environment variables
-    os.environ['MLFLOW_TRACKING_URI'] = 'https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow'
+    # Set local backend store
+    os.environ['MLFLOW_TRACKING_URI'] = 'file:./mlruns'
+    os.environ['MLFLOW_ARTIFACT_ROOT'] = 'mlruns'
+    os.environ['MLFLOW_S3_ENDPOINT_URL'] = 'https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow'  # Remote
     os.environ['MLFLOW_TRACKING_USERNAME'] = 'covryzne'
     os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN')
-    os.environ['MLFLOW_ARTIFACT_ROOT'] = 'mlruns'  # Set lokal artifact root
     
     mlflow.set_experiment("Student_Performance_Prediction")
     
