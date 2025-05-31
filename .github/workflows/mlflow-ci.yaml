@@ -49,7 +49,21 @@ jobs:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           cd MLProject
-          run_ids=$(mlflow runs list --experiment-id 0 | grep -E '^[0-9a-f]{32}' | awk '{print $2}' | head -n 3)
+          export MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow
+          export MLFLOW_TRACKING_USERNAME=covryzne
+          export MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
+          # Dapatkan experiment ID dari nama experiment
+          experiment_id=$(mlflow experiments search --filter "name = 'Student_Performance_Prediction'" | grep -E '^[0-9]+' | awk '{print $1}' | head -n 1)
+          if [ -z "$experiment_id" ]; then
+            echo "Experiment 'Student_Performance_Prediction' not found"
+            exit 1
+          fi
+          echo "Experiment ID: $experiment_id"
+          run_ids=$(mlflow runs list --experiment-id $experiment_id | grep -E '^[0-9a-f]{32}' | awk '{print $2}' | head -n 3)
+          if [ -z "$run_ids" ]; then
+            echo "No runs found for experiment ID: $experiment_id"
+            exit 1
+          fi
           echo "run_ids=$run_ids" >> $GITHUB_ENV
           echo "Latest run_ids: $run_ids"
 
@@ -58,6 +72,9 @@ jobs:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           cd MLProject
+          export MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow
+          export MLFLOW_TRACKING_USERNAME=covryzne
+          export MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
           mkdir -p mlruns/0
           for run_id in ${{ env.run_ids }}; do
             echo "Downloading artifacts for run_id: $run_id"
@@ -73,6 +90,8 @@ jobs:
           ls -la MLProject/  # Debug: cek isi folder MLProject
           if [ -d "MLProject/mlruns" ]; then
             ls -la MLProject/mlruns/  # Debug: cek isi mlruns
+            git config user.name "covryzne"
+            git config user.email "shendyteuku2@gmail.com"
             git add MLProject/mlruns/
             git add .gitattributes
             git commit -m "Add MLflow artifacts to LFS" || echo "No changes to commit"
