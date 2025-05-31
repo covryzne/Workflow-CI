@@ -52,14 +52,7 @@ jobs:
           export MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow
           export MLFLOW_TRACKING_USERNAME=covryzne
           export MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
-          # Dapatkan experiment ID dari nama experiment
-          experiment_id=$(mlflow experiments list | grep 'Student_Performance_Prediction' | awk '{print $1}' | head -n 1)
-          if [ -z "$experiment_id" ]; then
-            echo "Experiment 'Student_Performance_Prediction' not found"
-            echo "Available experiments:"
-            mlflow experiments list
-            exit 1
-          fi
+          experiment_id=0  # Hardcode berdasarkan log DagsHub
           echo "Experiment ID: $experiment_id"
           run_ids=$(mlflow runs list --experiment-id $experiment_id | grep -E '^[0-9a-f]{32}' | awk '{print $2}' | head -n 3)
           if [ -z "$run_ids" ]; then
@@ -92,8 +85,8 @@ jobs:
           ls -la MLProject/  # Debug: cek isi folder MLProject
           if [ -d "MLProject/mlruns" ]; then
             ls -la MLProject/mlruns/  # Debug: cek isi mlruns
-            git config user.name "covryzne"
-            git config user.email "shendyteuku2@gmail.com"
+            git config user.name "ShendiTeukuMaulanaEfendi"
+            git config user.email "your_email@example.com"  # Ganti dengan email lu
             git add MLProject/mlruns/
             git add .gitattributes
             git commit -m "Add MLflow artifacts to LFS" || echo "No changes to commit"
