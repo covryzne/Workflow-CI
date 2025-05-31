@@ -19,7 +19,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / (y_true + 1e-10))) * 100
 
 def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
-    with mlflow.start_run(run_name=model_name):
+    with mlflow.start_run(run_name=model_name) as run:
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         
@@ -60,22 +60,20 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         plt.title(f'Predicted vs Actual ({model_name})')
         plt.savefig(plot_path)
         print(f"Saved plot to {plot_path}")
-        mlflow.log_artifact(plot_path, artifact_path="plots")  # Lokal
-        mlflow.log_artifact(plot_path, artifact_path="plots", tracking_uri="https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow")  # DagsHub
-        print(f"Logged artifact {plot_path} to MLflow")
+        mlflow.log_artifact(plot_path, artifact_path=f"plots/{model_name}")
+        print(f"Logged artifact {plot_path} to MLflow at plots/{model_name}")
         plt.close()
         
         print(f"MLflow artifact root: {os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns')}")
         print(f"Current working directory: {os.getcwd()}")
         print(f"Artifact path exists: {os.path.exists(plot_path)}")
+        print(f"Run ID: {run.info.run_id}")
         
         print(f"{model_name} - R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}, MAPE: {mape:.4f}, Explained Variance: {explained_var:.4f}")
 
 def main():
-    # Set local backend store
-    os.environ['MLFLOW_TRACKING_URI'] = 'file:./mlruns'
-    os.environ['MLFLOW_ARTIFACT_ROOT'] = 'mlruns'
-    os.environ['MLFLOW_S3_ENDPOINT_URL'] = 'https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow'  # Remote
+    # Set DagsHub tracking
+    os.environ['MLFLOW_TRACKING_URI'] = 'https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow'
     os.environ['MLFLOW_TRACKING_USERNAME'] = 'covryzne'
     os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN')
     

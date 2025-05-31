@@ -37,16 +37,34 @@ jobs:
           echo "MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}" >> $GITHUB_ENV
 
       - name: Run MLflow project
+        env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           cd MLProject
           mlflow run . --env-manager=local -P data_path=student_habits_preprocessing.csv
-          ls -la mlruns/ || echo "mlruns directory not found in MLProject after MLflow run"
           ls -la Membangun_model/ || echo "Membangun_model directory not found"
 
-      - name: Get latest MLflow run_id
+      - name: Get latest MLflow run_ids
+        env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          run_id=$(mlflow runs list --experiment-id 0 | head -n 1 | awk '{print $2}')
-          echo "run_id=$run_id" >> $GITHUB_ENV
+          cd MLProject
+          run_ids=$(mlflow runs list --experiment-id 0 | grep -E '^[0-9a-f]{32}' | awk '{print $2}' | head -n 3)
+          echo "run_ids=$run_ids" >> $GITHUB_ENV
+          echo "Latest run_ids: $run_ids"
+
+      - name: Download artifacts from DagsHub
+        env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          cd MLProject
+          mkdir -p mlruns/0
+          for run_id in ${{ env.run_ids }}; do
+            echo "Downloading artifacts for run_id: $run_id"
+            mlflow artifacts download --run-id $run_id --dst-path mlruns/0/$run_id/artifacts
+            ls -la mlruns/0/$run_id/artifacts || echo "No artifacts downloaded for run_id: $run_id"
+          done
+          ls -la mlruns/ || echo "mlruns directory structure after download"
 
       - name: Upload artifacts to GitHub LFS
         run: |
