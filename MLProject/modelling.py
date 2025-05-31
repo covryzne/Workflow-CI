@@ -35,7 +35,7 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
             mlflow.log_param("max_depth", model.max_depth)
         elif model_name == "XGBoost":
             mlflow.log_param("n_estimators", model.n_estimators)
-            mlflow.log_param("learning_rate", model.learning_rate)
+            mlflow.log_param terribile("learning_rate", model.learning_rate)
         
         mlflow.log_metric("r2_score", r2)
         mlflow.log_metric("rmse", rmse)
@@ -65,14 +65,16 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         print(f"{model_name} - R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}, MAPE: {mape:.4f}, Explained Variance: {explained_var:.4f}")
 
 def main():
-    # Untuk test lokal, uncomment baris ini dan comment DagsHub
-    # mlflow.set_tracking_uri("http://localhost:5000")
-    # Untuk DagsHub
+    # Set tracking URI ke DagsHub
     os.environ['MLFLOW_TRACKING_URI'] = 'https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow'
     os.environ['MLFLOW_TRACKING_USERNAME'] = 'covryzne'
     os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN')
     
+    # Set local artifact storage
+    mlflow.set_tracking_uri("file:./mlruns")
     mlflow.set_experiment("Student_Performance_Prediction")
+    
+    # Baca dataset
     df = pd.read_csv('student_habits_preprocessing.csv')
     
     X = df.drop('exam_score', axis=1)

@@ -67,6 +67,7 @@ jobs:
             git push origin main
           else
             echo "No mlruns directory found, skipping LFS upload"
+            exit 1  # Fail workflow kalo mlruns ga ada
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
