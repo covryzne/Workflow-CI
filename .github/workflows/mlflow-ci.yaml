@@ -53,9 +53,11 @@ jobs:
           export MLFLOW_TRACKING_USERNAME=covryzne
           export MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
           # Dapatkan experiment ID dari nama experiment
-          experiment_id=$(mlflow experiments search --filter "name = 'Student_Performance_Prediction'" | grep -E '^[0-9]+' | awk '{print $1}' | head -n 1)
+          experiment_id=$(mlflow experiments list | grep 'Student_Performance_Prediction' | awk '{print $1}' | head -n 1)
           if [ -z "$experiment_id" ]; then
             echo "Experiment 'Student_Performance_Prediction' not found"
+            echo "Available experiments:"
+            mlflow experiments list
             exit 1
           fi
           echo "Experiment ID: $experiment_id"
