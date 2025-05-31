@@ -67,13 +67,13 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
 def main():
     # Untuk test lokal, uncomment baris ini dan comment DagsHub
     # mlflow.set_tracking_uri("http://localhost:5000")
-    # Untuk DagsHub, uncomment baris ini dan comment lokal
+    # Untuk DagsHub
     os.environ['MLFLOW_TRACKING_URI'] = 'https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow'
     os.environ['MLFLOW_TRACKING_USERNAME'] = 'covryzne'
     os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN')
     
     mlflow.set_experiment("Student_Performance_Prediction")
-    df = pd.read_csv('Membangun_model/student_habits_preprocessing.csv')
+    df = pd.read_csv('MLProject/student_habits_preprocessing.csv')
     
     X = df.drop('exam_score', axis=1)
     y = df['exam_score']
