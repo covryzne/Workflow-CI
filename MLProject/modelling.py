@@ -35,7 +35,7 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
             mlflow.log_param("max_depth", model.max_depth)
         elif model_name == "XGBoost":
             mlflow.log_param("n_estimators", model.n_estimators)
-            mlflow.log_param terribile("learning_rate", model.learning_rate)
+            mlflow.log_param("learning_rate", model.learning_rate)
         
         mlflow.log_metric("r2_score", r2)
         mlflow.log_metric("rmse", rmse)
