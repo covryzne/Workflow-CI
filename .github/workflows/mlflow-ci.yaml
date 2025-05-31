@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12.7'
+          python-version: "3.12.7"
 
       # Check environment
       - name: Check Env
@@ -45,7 +45,7 @@ jobs:
       - name: Run MLflow project
         run: |
           cd MLProject
-          mlflow run . --no-env-manager -P data_path=student_habits_preprocessing.csv
+          mlflow run . --env-manager=local -P data_path=student_habits_preprocessing.csv
 
       # Get latest MLflow run_id
       - name: Get latest MLflow run_id
