@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12.7'
+          python-version: "3.12.7"
 
       # Check environment
       - name: Check Env
@@ -51,20 +51,23 @@ jobs:
 
       # Get latest MLflow run_id
       - name: Get latest MLflow run_id
-        id: get_run_id
         run: |
           run_id=$(mlflow runs list --experiment-id 0 | head -n 1 | awk '{print $2}')
-          echo "::set-output name=run_id::$run_id"
+          echo "run_id=$run_id" >> $GITHUB_ENV
 
       # Upload artifacts to GitHub LFS
       - name: Upload artifacts to GitHub LFS
         run: |
           git lfs install
           git lfs track "MLProject/mlruns/**/*"
-          git add MLProject/mlruns/
-          git add .gitattributes
-          git commit -m "Add MLflow artifacts to LFS" || echo "No changes to commit"
-          git push origin main
+          if [ -d "MLProject/mlruns" ]; then
+            git add MLProject/mlruns/
+            git add .gitattributes
+            git commit -m "Add MLflow artifacts to LFS" || echo "No changes to commit"
+            git push origin main
+          else
+            echo "No mlruns directory found, skipping LFS upload"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -96,13 +99,11 @@ jobs:
         run: |
           docker logout
 
-      # Post Set up Python 3.12.7
       - name: Post Set up Python 3.12.7
         if: always()
         run: |
           echo "Python setup completed"
 
-      # Post Run actions/checkout@v3
       - name: Post Run actions/checkout@v3
         if: always()
         run: |
