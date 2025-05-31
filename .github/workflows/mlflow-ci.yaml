@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12.7"
+          python-version: '3.12.7'
 
       # Check environment
       - name: Check Env
@@ -44,7 +44,7 @@ jobs:
       # Run MLflow project
       - name: Run MLflow project
         env:
-        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           cd MLProject
           mlflow run . --env-manager=local -P data_path=student_habits_preprocessing.csv
@@ -96,11 +96,13 @@ jobs:
         run: |
           docker logout
 
+      # Post Set up Python 3.12.7
       - name: Post Set up Python 3.12.7
         if: always()
         run: |
           echo "Python setup completed"
 
+      # Post Run actions/checkout@v3
       - name: Post Run actions/checkout@v3
         if: always()
         run: |
