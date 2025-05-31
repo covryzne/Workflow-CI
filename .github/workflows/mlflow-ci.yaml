@@ -41,22 +41,14 @@ jobs:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           cd MLProject
-          mlflow run . --env-manager=local -P data_path=student_habits_preprocessing.csv
+          # Simpan output mlflow run ke file
+          mlflow run . --env-manager=local -P data_path=student_habits_preprocessing.csv > mlflow_output.log
           ls -la Membangun_model/ || echo "Membangun_model directory not found"
-
-      - name: Get latest MLflow run_ids
-        env:
-          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: |
-          cd MLProject
-          export MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow
-          export MLFLOW_TRACKING_USERNAME=covryzne
-          export MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
-          experiment_id=0  # Hardcode berdasarkan log DagsHub
-          echo "Experiment ID: $experiment_id"
-          run_ids=$(mlflow runs list --experiment-id $experiment_id | grep -E '^[0-9a-f]{32}' | awk '{print $2}' | head -n 3)
+          # Ambil run IDs dari output
+          run_ids=$(grep 'MLFLOW_RUN_ID=' mlflow_output.log | cut -d'=' -f2 | tr '\n' ' ')
           if [ -z "$run_ids" ]; then
-            echo "No runs found for experiment ID: $experiment_id"
+            echo "No run IDs found in mlflow output"
+            cat mlflow_output.log
             exit 1
           fi
           echo "run_ids=$run_ids" >> $GITHUB_ENV

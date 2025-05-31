@@ -69,6 +69,10 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         print(f"Artifact path exists: {os.path.exists(plot_path)}")
         print(f"Run ID: {run.info.run_id}")
         
+        # ✅ Cetak run_id untuk GitHub Actions
+        run_id = run.info.run_id
+        print(f"MLFLOW_RUN_ID={run_id}")
+        
         print(f"{model_name} - R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}, MAPE: {mape:.4f}, Explained Variance: {explained_var:.4f}")
 
 def main():
