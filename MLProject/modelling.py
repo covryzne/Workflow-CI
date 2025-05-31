@@ -59,8 +59,14 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         plt.ylabel('Predicted')
         plt.title(f'Predicted vs Actual ({model_name})')
         plt.savefig(plot_path)
+        print(f"Saved plot to {plot_path}")  # Debug
         mlflow.log_artifact(plot_path)
+        print(f"Logged artifact {plot_path} to MLflow")  # Debug
         plt.close()
+        
+        # Debug: cek artifact root
+        artifact_root = os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns')
+        print(f"MLflow artifact root: {artifact_root}")
         
         print(f"{model_name} - R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}, MAPE: {mape:.4f}, Explained Variance: {explained_var:.4f}")
 
