@@ -73,7 +73,7 @@ def main():
     os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN')
     
     mlflow.set_experiment("Student_Performance_Prediction")
-    df = pd.read_csv('MLProject/student_habits_preprocessing.csv')
+    df = pd.read_csv('student_habits_preprocessing.csv')
     
     X = df.drop('exam_score', axis=1)
     y = df['exam_score']
