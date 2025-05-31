@@ -65,13 +65,11 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         print(f"{model_name} - R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}, MAPE: {mape:.4f}, Explained Variance: {explained_var:.4f}")
 
 def main():
-    # Set tracking URI ke DagsHub
+    # Rely on environment variables for tracking URI
     os.environ['MLFLOW_TRACKING_URI'] = 'https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow'
     os.environ['MLFLOW_TRACKING_USERNAME'] = 'covryzne'
     os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv('DAGSHUB_TOKEN')
     
-    # Set local artifact storage
-    mlflow.set_tracking_uri("file:./mlruns")
     mlflow.set_experiment("Student_Performance_Prediction")
     
     # Baca dataset

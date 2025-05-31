@@ -40,6 +40,7 @@ jobs:
           echo "MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow" >> $GITHUB_ENV
           echo "MLFLOW_TRACKING_USERNAME=covryzne" >> $GITHUB_ENV
           echo "MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}" >> $GITHUB_ENV
+          echo "MLFLOW_ARTIFACT_ROOT=MLProject/mlruns" >> $GITHUB_ENV
 
       # Run MLflow project
       - name: Run MLflow project
@@ -67,8 +68,7 @@ jobs:
             git push origin main
           else
             echo "No mlruns directory found, skipping LFS upload"
-            exit 1  # Fail workflow kalo mlruns ga ada
-          fi
+            exit 1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
