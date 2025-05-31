@@ -32,7 +32,7 @@ jobs:
       # Install dependencies
       - name: Install dependencies
         run: |
-          pip install mlflow scikit-learn pandas numpy xgboost matplotlib seaborn python-dotenv
+          pip install mlflow==2.17.0 scikit-learn==1.5.2 pandas==2.2.3 numpy==2.1.2 xgboost==2.1.1 matplotlib==3.9.2 seaborn==0.13.2 python-dotenv==1.0.1
 
       # Set MLflow Tracking URI and credentials
       - name: Set MLflow Tracking URI
@@ -45,7 +45,7 @@ jobs:
       - name: Run MLflow project
         run: |
           cd MLProject
-          mlflow run . --no-conda -P data_path=student_habits_preprocessing.csv
+          mlflow run . --no-env-manager -P data_path=student_habits_preprocessing.csv
 
       # Get latest MLflow run_id
       - name: Get latest MLflow run_id
