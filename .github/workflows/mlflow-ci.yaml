@@ -41,18 +41,23 @@ jobs:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           cd MLProject
-          # Simpan output mlflow run ke file
           mlflow run . --env-manager=local -P data_path=student_habits_preprocessing.csv > mlflow_output.log
           ls -la Membangun_model/ || echo "Membangun_model directory not found"
-          # Ambil run IDs dari output
-          run_ids=$(grep 'MLFLOW_RUN_ID=' mlflow_output.log | cut -d'=' -f2 | tr '\n' ' ')
-          if [ -z "$run_ids" ]; then
-            echo "No run IDs found in mlflow output"
+          # Ambil run ID untuk tiap model
+          linear_run_id=$(grep 'MLFLOW_RUN_ID=' mlflow_output.log | grep 'Linear Regression' -B1 | head -1 | cut -d'=' -f2)
+          rf_run_id=$(grep 'MLFLOW_RUN_ID=' mlflow_output.log | grep 'Random Forest' -B1 | head -1 | cut -d'=' -f2)
+          xgb_run_id=$(grep 'MLFLOW_RUN_ID=' mlflow_output.log | grep 'XGBoost' -B1 | head -1 | cut -d'=' -f2)
+          if [ -z "$xgb_run_id" ]; then
+            echo "No run ID found for XGBoost"
             cat mlflow_output.log
             exit 1
           fi
-          echo "run_ids=$run_ids" >> $GITHUB_ENV
-          echo "Latest run_ids: $run_ids"
+          echo "linear_run_id=$linear_run_id" >> $GITHUB_ENV
+          echo "rf_run_id=$rf_run_id" >> $GITHUB_ENV
+          echo "xgb_run_id=$xgb_run_id" >> $GITHUB_ENV
+          echo "Linear Regression run ID: $linear_run_id"
+          echo "Random Forest run ID: $rf_run_id"
+          echo "XGBoost run ID: $xgb_run_id"
 
       - name: Download artifacts from DagsHub
         env:
@@ -62,8 +67,9 @@ jobs:
           export MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow
           export MLFLOW_TRACKING_USERNAME=covryzne
           export MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
-          mkdir -p ../mlruns/0  # Buat mlruns di root
-          for run_id in ${{ env.run_ids }}; do
+          mkdir -p ../mlruns/0
+          # Download artifacts untuk semua model
+          for run_id in ${{ env.linear_run_id }} ${{ env.rf_run_id }} ${{ env.xgb_run_id }}; do
             echo "Downloading artifacts for run_id: $run_id"
             mlflow artifacts download --run-id $run_id --dst-path ../mlruns/0/$run_id/artifacts
             ls -la ../mlruns/0/$run_id/artifacts || echo "No artifacts downloaded for run_id: $run_id"
@@ -73,12 +79,12 @@ jobs:
       - name: Upload artifacts to GitHub LFS
         run: |
           git lfs install
-          git lfs track "mlruns/**/*"  # Track mlruns di root
-          ls -la .  # Debug: cek isi root
+          git lfs track "mlruns/**/*"
+          ls -la .  # Debug
           if [ -d "mlruns" ]; then
-            ls -la mlruns/  # Debug: cek isi mlruns
+            ls -la mlruns/  # Debug
             git config user.name "covryzne"
-            git config user.email "shendyteuku2@gmail.com"  # Ganti dengan email lu
+            git config user.email "shendyteuku2@gmail.com"
             git add mlruns/
             git add .gitattributes
             git commit -m "Add MLflow artifacts to LFS" || echo "No changes to commit"
@@ -92,7 +98,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t workflow-ci:latest MLProject/
+          # Build image untuk serving XGBoost (bisa ganti ke model lain)
+          docker build -t workflow-ci:latest --build-arg RUN_ID=${{ env.xgb_run_id }} --build-arg MODEL_NAME=XGBoost MLProject/
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -112,16 +119,6 @@ jobs:
         if: always()
         run: |
           docker logout
-
-      - name: Post Set up Python 3.12.7
-        if: always()
-        run: |
-          echo "Python setup completed"
-
-      - name: Post Run actions/checkout@v3
-        if: always()
-        run: |
-          echo "Checkout completed"
 
       - name: Complete job
         if: always()
