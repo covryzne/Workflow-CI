@@ -65,23 +65,22 @@ jobs:
         env:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          cd MLProject
           export MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow
           export MLFLOW_TRACKING_USERNAME=covryzne
           export MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
-          mkdir -p ../mlruns/0
+          mkdir -p mlruns/0  # Buat mlruns di root
           # Download artifacts untuk semua model
           for run_id in ${{ env.linear_run_id }} ${{ env.rf_run_id }} ${{ env.xgb_run_id }}; do
             echo "Downloading artifacts for run_id: $run_id"
-            mlflow artifacts download --run-id $run_id --dst-path ../mlruns/0/$run_id/artifacts
-            ls -la ../mlruns/0/$run_id/artifacts || echo "No artifacts downloaded for run_id: $run_id"
+            mlflow artifacts download --run-id $run_id --dst-path mlruns/0/$run_id/artifacts
+            ls -la mlruns/0/$run_id/artifacts || echo "No artifacts downloaded for run_id: $run_id"
           done
-          ls -la ../mlruns/ || echo "mlruns directory structure after download"
+          ls -la mlruns/ || echo "mlruns directory structure after download"
 
       - name: Upload artifacts to GitHub LFS
         run: |
           git lfs install
-          git lfs track "mlruns/**/*"
+          git lfs track "mlruns/**/*"  # Track mlruns di root
           ls -la .  # Debug
           if [ -d "mlruns" ]; then
             ls -la mlruns/  # Debug
@@ -100,7 +99,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t workflow-ci:latest --build-arg RUN_ID=${{ env.xgb_run_id }} --build-arg MODEL_NAME=XGBoost MLProject/
+          docker build -t workflow-ci:latest --build-arg RUN_ID=${{ env.xgb_run_id }} --build-arg MODEL_NAME=XGBoost -f MLProject/Dockerfile .
+        # Build dari root repo dengan Dockerfile di MLProject/
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
