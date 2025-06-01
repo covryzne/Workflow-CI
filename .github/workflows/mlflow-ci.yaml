@@ -43,10 +43,12 @@ jobs:
           cd MLProject
           mlflow run . --env-manager=local -P data_path=student_habits_preprocessing.csv > mlflow_output.log
           ls -la Membangun_model/ || echo "Membangun_model directory not found"
-          # Ambil run ID untuk tiap model
-          linear_run_id=$(grep 'MLFLOW_RUN_ID=' mlflow_output.log | grep 'Linear Regression' -B1 | head -1 | cut -d'=' -f2)
-          rf_run_id=$(grep 'MLFLOW_RUN_ID=' mlflow_output.log | grep 'Random Forest' -B1 | head -1 | cut -d'=' -f2)
-          xgb_run_id=$(grep 'MLFLOW_RUN_ID=' mlflow_output.log | grep 'XGBoost' -B1 | head -1 | cut -d'=' -f2)
+          # Ambil semua run ID dari log
+          run_ids=($(grep 'MLFLOW_RUN_ID=' mlflow_output.log | cut -d'=' -f2))
+          # Assign run ID berdasarkan urutan di modelling.py
+          linear_run_id=${run_ids[0]}
+          rf_run_id=${run_ids[1]}
+          xgb_run_id=${run_ids[2]}
           if [ -z "$xgb_run_id" ]; then
             echo "No run ID found for XGBoost"
             cat mlflow_output.log
@@ -98,7 +100,6 @@ jobs:
 
       - name: Build Docker image
         run: |
-          # Build image untuk serving XGBoost (bisa ganti ke model lain)
           docker build -t workflow-ci:latest --build-arg RUN_ID=${{ env.xgb_run_id }} --build-arg MODEL_NAME=XGBoost MLProject/
 
       - name: Log in to Docker Hub
