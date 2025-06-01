@@ -20,6 +20,9 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
     with mlflow.start_run(run_name=model_name) as run:
+        # Debug: Cek MLflow tracking URI
+        print(f"MLflow tracking URI: {mlflow.get_tracking_uri()}")
+        
         # Train model
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
@@ -48,27 +51,35 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         mlflow.log_metric("explained_variance", explained_var)
         
         # Log model
-        if model_name == "XGBoost":
-            mlflow.xgboost.log_model(model, model_name, input_example=X_test[:1])
-            print(f"Logged XGBoost model to artifacts/{model_name}")
-        else:
-            mlflow.sklearn.log_model(model, model_name, input_example=X_test[:1])
-            print(f"Logged sklearn model to artifacts/{model_name}")
+        try:
+            if model_name == "XGBoost":
+                mlflow.xgboost.log_model(model, model_name, input_example=X_test[:1])
+                print(f"Logged XGBoost model to artifacts/{model_name}")
+            else:
+                mlflow.sklearn.log_model(model, model_name, input_example=X_test[:1])
+                print(f"Logged sklearn model to artifacts/{model_name}")
+        except Exception as e:
+            print(f"Failed to log model {model_name}: {str(e)}")
+            raise
         
         # Buat dan simpen plot
         plot_dir = "Membangun_model/Actual VS Predicted Graph"
         os.makedirs(plot_dir, exist_ok=True)
         plot_path = os.path.join(plot_dir, f"{model_name}_prediksi.png")
         
-        plt.figure(figsize=(8, 6))
-        sns.scatterplot(x=y_test, y=y_pred)
-        plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
-        plt.xlabel('Actual')
-        plt.ylabel('Predicted')
-        plt.title(f'Predicted vs Actual ({model_name})')
-        plt.savefig(plot_path)
-        plt.close()
-        print(f"Saved plot to {plot_path}")
+        try:
+            plt.figure(figsize=(8, 6))
+            sns.scatterplot(x=y_test, y=y_pred)
+            plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
+            plt.xlabel('Actual')
+            plt.ylabel('Predicted')
+            plt.title(f'Predicted vs Actual ({model_name})')
+            plt.savefig(plot_path)
+            plt.close()
+            print(f"Saved plot to {plot_path}")
+        except Exception as e:
+            print(f"Failed to save plot {plot_path}: {str(e)}")
+            raise
         
         # Log plot sebagai artifact
         try:
@@ -76,6 +87,7 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
             print(f"Logged artifact {plot_path} to artifacts/plots/{model_name}")
         except Exception as e:
             print(f"Failed to log artifact {plot_path}: {str(e)}")
+            raise
         
         # Debug
         print(f"MLflow artifact root: {os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns')}")
@@ -85,8 +97,11 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         
         # Debug: Cek artifacts di DagsHub
         client = mlflow.tracking.MlflowClient()
-        artifacts = client.list_artifacts(run.info.run_id)
-        print(f"Artifacts for run_id {run.info.run_id}: {[a.path for a in artifacts]}")
+        try:
+            artifacts = client.list_artifacts(run.info.run_id)
+            print(f"Artifacts for run_id {run.info.run_id}: {[a.path for a in artifacts]}")
+        except Exception as e:
+            print(f"Failed to list artifacts for run_id {run.info.run_id}: {str(e)}")
         
         # Cetak run_id untuk GitHub Actions
         run_id = run.info.run_id
@@ -107,7 +122,11 @@ def main():
     mlflow.set_experiment("Student_Performance_Prediction")
     
     # Baca dataset
-    df = pd.read_csv('student_habits_preprocessing.csv')
+    try:
+        df = pd.read_csv('student_habits_preprocessing.csv')
+    except Exception as e:
+        print(f"Failed to read dataset: {str(e)}")
+        raise
     
     X = df.drop('exam_score', axis=1)
     y = df['exam_score']

@@ -87,8 +87,16 @@ jobs:
               except Exception as e:
                   print(f"Failed to download artifacts for run_id {run_id}: {str(e)}")
                   traceback.print_exc()
-                  # Buat folder artifacts kosong biar struktur ada
+                  # Buat folder artifacts kosong
                   os.makedirs(os.path.join(dst_path, "artifacts"), exist_ok=True)
+
+              # Cek artifacts di DagsHub
+              try:
+                  artifacts = client.list_artifacts(run_id)
+                  print(f"Artifacts in DagsHub for run_id {run_id}: {[a.path for a in artifacts]}")
+              except Exception as e:
+                  print(f"Failed to list artifacts for run_id {run_id}: {str(e)}")
+                  traceback.print_exc()
 
               # Buat meta.yaml
               try:
@@ -120,11 +128,10 @@ jobs:
                   # Cek file kunci
                   meta_yaml = f"{dst_path}/meta.yaml"
                   artifacts_dir = f"{dst_path}/artifacts"
-                  if os.path.exists(meta_yaml) and os.path.exists(artifacts_dir):
-                      print(f"Run directory complete for run_id: {run_id}")
+                  if os.path.exists(meta_yaml):
+                      print(f"Run directory prepared for run_id: {run_id}")
                       os.system(f"ls -la {dst_path}/")
                       os.system(f"ls -la {artifacts_dir}/")
-                      # Cek isi artifacts
                       os.system(f"find {artifacts_dir} -type f")
                   else:
                       print(f"Incomplete run directory for run_id: {run_id}")
