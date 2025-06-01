@@ -20,6 +20,10 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
     with mlflow.start_run(run_name=model_name) as run:
+        # Cek meta.yaml
+        meta_yaml_path = os.path.join(os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns'), '0', run.info.run_id, 'meta.yaml')
+        print(f"meta.yaml path: {meta_yaml_path}")
+        
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         
@@ -30,7 +34,7 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         explained_var = explained_variance_score(y_test, y_pred)
         
         mlflow.log_param("model_type", model_name)
-        if model_name == "Random Forest":
+        if model_name == "RandomForest":
             mlflow.log_param("n_estimators", model.n_estimators)
             mlflow.log_param("max_depth", model.max_depth)
         elif model_name == "XGBoost":
@@ -67,15 +71,20 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         print(f"MLflow artifact root: {os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns')}")
         print(f"Current working directory: {os.getcwd()}")
         print(f"Artifact path exists: {os.path.exists(plot_path)}")
+        print(f"meta.yaml exists: {os.path.exists(meta_yaml_path)}")
         print(f"Run ID: {run.info.run_id}")
         
-        # ✅ Cetak run_id untuk GitHub Actions
+        # Cetak run_id untuk GitHub Actions
         run_id = run.info.run_id
         print(f"MLFLOW_RUN_ID={run_id}")
         
         print(f"{model_name} - R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}, MAPE: {mape:.4f}, Explained Variance: {explained_var:.4f}")
 
 def main():
+    # Validasi DagsHub token
+    if not os.getenv('DAGSHUB_TOKEN'):
+        raise ValueError("DAGSHUB_TOKEN not set in environment")
+    
     # Set DagsHub tracking
     os.environ['MLFLOW_TRACKING_URI'] = 'https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow'
     os.environ['MLFLOW_TRACKING_USERNAME'] = 'covryzne'
@@ -88,11 +97,12 @@ def main():
     
     X = df.drop('exam_score', axis=1)
     y = df['exam_score']
+    print(f"Feature columns: {X.columns.tolist()}")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     models = [
-        ("Linear Regression", LinearRegression()),
-        ("Random Forest", RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)),
+        ("LinearRegression", LinearRegression()),
+        ("RandomForest", RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)),
         ("XGBoost", XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42))
     ]
     

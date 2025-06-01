@@ -68,12 +68,22 @@ jobs:
           export MLFLOW_TRACKING_URI=https://dagshub.com/covryzne/Eksperimen_SML_ShendiTeukuMaulanaEfendi.mlflow
           export MLFLOW_TRACKING_USERNAME=covryzne
           export MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
-          mkdir -p mlruns/0  # Buat mlruns di root
-          # Download artifacts untuk semua model
+          mkdir -p mlruns/0
+          # Download seluruh run directory
           for run_id in ${{ env.linear_run_id }} ${{ env.rf_run_id }} ${{ env.xgb_run_id }}; do
-            echo "Downloading artifacts for run_id: $run_id"
-            mlflow artifacts download --run-id $run_id --dst-path mlruns/0/$run_id/artifacts
-            ls -la mlruns/0/$run_id/artifacts || echo "No artifacts downloaded for run_id: $run_id"
+            echo "Downloading run directory for run_id: $run_id"
+            mkdir -p mlruns/0/$run_id
+            mlflow runs download --run-id $run_id --dst-path mlruns/0/$run_id
+            # Cek file kunci
+            if [ -f "mlruns/0/$run_id/meta.yaml" ] && [ -d "mlruns/0/$run_id/artifacts" ]; then
+              echo "Run directory complete for run_id: $run_id"
+              ls -la mlruns/0/$run_id/
+              ls -la mlruns/0/$run_id/artifacts/
+            else
+              echo "Incomplete run directory for run_id: $run_id"
+              ls -la mlruns/0/$run_id/ || true
+              exit 1
+            fi
           done
           ls -la mlruns/ || echo "mlruns directory structure after download"
 
