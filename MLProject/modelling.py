@@ -20,19 +20,18 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
     with mlflow.start_run(run_name=model_name) as run:
-        # Cek meta.yaml
-        meta_yaml_path = os.path.join(os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns'), '0', run.info.run_id, 'meta.yaml')
-        print(f"meta.yaml path: {meta_yaml_path}")
-        
+        # Train model
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         
+        # Hitung metrik
         r2 = r2_score(y_test, y_pred)
         rmse = np.sqrt(mean_squared_error(y_test, y_pred))
         mae = mean_absolute_error(y_test, y_pred)
         mape = mean_absolute_percentage_error(y_test, y_pred)
         explained_var = explained_variance_score(y_test, y_pred)
         
+        # Log parameter
         mlflow.log_param("model_type", model_name)
         if model_name == "RandomForest":
             mlflow.log_param("n_estimators", model.n_estimators)
@@ -41,25 +40,22 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
             mlflow.log_param("n_estimators", model.n_estimators)
             mlflow.log_param("learning_rate", model.learning_rate)
         
+        # Log metrik
         mlflow.log_metric("r2_score", r2)
         mlflow.log_metric("rmse", rmse)
         mlflow.log_metric("mae", mae)
         mlflow.log_metric("mape", mape)
         mlflow.log_metric("explained_variance", explained_var)
         
+        # Log model
         if model_name == "XGBoost":
-            mlflow.xgboost.log_model(model, model_name)
+            mlflow.xgboost.log_model(model, model_name, input_example=X_test[:1])
+            print(f"Logged XGBoost model to artifacts/{model_name}")
         else:
-            mlflow.sklearn.log_model(model, model_name)
-            
-        mlflow.log_artifact(plot_path, artifact_path=f"plots/{model_name}")
-        print(f"Logged artifact {plot_path} to artifacts/plots/{model_name}")
+            mlflow.sklearn.log_model(model, model_name, input_example=X_test[:1])
+            print(f"Logged sklearn model to artifacts/{model_name}")
         
-        # Debug: Cek apakah artifacts di-upload
-        client = mlflow.tracking.MlflowClient()
-        artifacts = client.list_artifacts(run.info.run_id)
-        print(f"Artifacts for run_id {run.info.run_id}: {[a.path for a in artifacts]}")
-        
+        # Buat dan simpen plot
         plot_dir = "Membangun_model/Actual VS Predicted Graph"
         os.makedirs(plot_dir, exist_ok=True)
         plot_path = os.path.join(plot_dir, f"{model_name}_prediksi.png")
@@ -71,16 +67,26 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
         plt.ylabel('Predicted')
         plt.title(f'Predicted vs Actual ({model_name})')
         plt.savefig(plot_path)
-        print(f"Saved plot to {plot_path}")
-        mlflow.log_artifact(plot_path, artifact_path=f"plots/{model_name}")
-        print(f"Logged artifact {plot_path} to MLflow at plots/{model_name}")
         plt.close()
+        print(f"Saved plot to {plot_path}")
         
+        # Log plot sebagai artifact
+        try:
+            mlflow.log_artifact(plot_path, artifact_path=f"plots/{model_name}")
+            print(f"Logged artifact {plot_path} to artifacts/plots/{model_name}")
+        except Exception as e:
+            print(f"Failed to log artifact {plot_path}: {str(e)}")
+        
+        # Debug
         print(f"MLflow artifact root: {os.getenv('MLFLOW_ARTIFACT_ROOT', 'mlruns')}")
         print(f"Current working directory: {os.getcwd()}")
-        print(f"Artifact path exists: {os.path.exists(plot_path)}")
-        print(f"meta.yaml exists: {os.path.exists(meta_yaml_path)}")
+        print(f"Plot path exists: {os.path.exists(plot_path)}")
         print(f"Run ID: {run.info.run_id}")
+        
+        # Debug: Cek artifacts di DagsHub
+        client = mlflow.tracking.MlflowClient()
+        artifacts = client.list_artifacts(run.info.run_id)
+        print(f"Artifacts for run_id {run.info.run_id}: {[a.path for a in artifacts]}")
         
         # Cetak run_id untuk GitHub Actions
         run_id = run.info.run_id
