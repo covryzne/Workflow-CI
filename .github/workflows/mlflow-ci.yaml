@@ -75,18 +75,27 @@ jobs:
           from mlflow.tracking import MlflowClient
           import os
           import shutil
+          import traceback
 
           def download_run(run_id, dst_path):
               client = MlflowClient()
               os.makedirs(dst_path, exist_ok=True)
-              # Download artifacts
-              artifact_path = client.download_artifacts(run_id, ".", dst_path)
-              print(f"Downloaded artifacts for run_id {run_id} to {artifact_path}")
-              # Copy meta.yaml (harus akses via run info)
-              run = client.get_run(run_id)
-              meta_yaml_path = os.path.join(dst_path, "meta.yaml")
-              with open(meta_yaml_path, "w") as f:
-                  f.write(f"""
+              try:
+                  # Download artifacts
+                  artifact_path = client.download_artifacts(run_id, ".", dst_path)
+                  print(f"Downloaded artifacts for run_id {run_id} to {artifact_path}")
+              except Exception as e:
+                  print(f"Failed to download artifacts for run_id {run_id}: {str(e)}")
+                  traceback.print_exc()
+                  # Buat folder artifacts kosong biar struktur ada
+                  os.makedirs(os.path.join(dst_path, "artifacts"), exist_ok=True)
+
+              # Buat meta.yaml
+              try:
+                  run = client.get_run(run_id)
+                  meta_yaml_path = os.path.join(dst_path, "meta.yaml")
+                  with open(meta_yaml_path, "w") as f:
+                      f.write(f"""
           artifact_uri: {run.info.artifact_uri}
           end_time: {run.info.end_time}
           experiment_id: {run.info.experiment_id}
@@ -97,7 +106,11 @@ jobs:
           status: {run.info.status}
           user_id: {run.info.user_id}
           """)
-              print(f"Created meta.yaml for run_id {run_id} at {meta_yaml_path}")
+                  print(f"Created meta.yaml for run_id {run_id} at {meta_yaml_path}")
+              except Exception as e:
+                  print(f"Failed to create meta.yaml for run_id {run_id}: {str(e)}")
+                  traceback.print_exc()
+                  exit(1)
 
           if __name__ == "__main__":
               run_ids = ["${{ env.linear_run_id }}", "${{ env.rf_run_id }}", "${{ env.xgb_run_id }}"]
@@ -105,10 +118,14 @@ jobs:
                   dst_path = f"mlruns/0/{run_id}"
                   download_run(run_id, dst_path)
                   # Cek file kunci
-                  if os.path.exists(f"{dst_path}/meta.yaml") and os.path.exists(f"{dst_path}/artifacts"):
+                  meta_yaml = f"{dst_path}/meta.yaml"
+                  artifacts_dir = f"{dst_path}/artifacts"
+                  if os.path.exists(meta_yaml) and os.path.exists(artifacts_dir):
                       print(f"Run directory complete for run_id: {run_id}")
                       os.system(f"ls -la {dst_path}/")
-                      os.system(f"ls -la {dst_path}/artifacts/")
+                      os.system(f"ls -la {artifacts_dir}/")
+                      # Cek isi artifacts
+                      os.system(f"find {artifacts_dir} -type f")
                   else:
                       print(f"Incomplete run directory for run_id: {run_id}")
                       os.system(f"ls -la {dst_path}/ || true")

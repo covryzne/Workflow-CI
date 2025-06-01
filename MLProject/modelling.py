@@ -51,6 +51,14 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
             mlflow.xgboost.log_model(model, model_name)
         else:
             mlflow.sklearn.log_model(model, model_name)
+            
+        mlflow.log_artifact(plot_path, artifact_path=f"plots/{model_name}")
+        print(f"Logged artifact {plot_path} to artifacts/plots/{model_name}")
+        
+        # Debug: Cek apakah artifacts di-upload
+        client = mlflow.tracking.MlflowClient()
+        artifacts = client.list_artifacts(run.info.run_id)
+        print(f"Artifacts for run_id {run.info.run_id}: {[a.path for a in artifacts]}")
         
         plot_dir = "Membangun_model/Actual VS Predicted Graph"
         os.makedirs(plot_dir, exist_ok=True)
