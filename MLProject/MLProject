@@ -1,4 +1,4 @@
-name: BigMartSalesModel
+name: Student Habits
 
 conda_env: conda.yaml
 
