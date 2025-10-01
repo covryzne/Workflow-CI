@@ -22,6 +22,9 @@ def train_and_log_model(model, model_name, X_train, X_test, y_train, y_test):
     with mlflow.start_run(run_name=model_name) as run:
         # Debug: Cek MLflow tracking URI
         print(f"MLflow tracking URI: {mlflow.get_tracking_uri()}")
+
+        # Enable autologging for scikit-learn and xgboost
+        mlflow.autolog()
         
         # Train model
         model.fit(X_train, y_train)
@@ -143,4 +146,5 @@ def main():
         train_and_log_model(model, model_name, X_train, X_test, y_train, y_test)
 
 if __name__ == "__main__":
+
     main()
